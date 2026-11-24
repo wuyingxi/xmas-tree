@@ -1,0 +1,20 @@
+# Runtime & local dev data
+data/
+data-dev/
+release.tar.gz
+
+# Third-party vendor binaries (download via `python tools/fetch_vendor.py`)
+web/vendor/
+web/**/*.gz
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

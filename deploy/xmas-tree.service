@@ -1,0 +1,19 @@
+[Unit]
+Description=Christmas tree photo & wish backend
+After=network.target
+
+[Service]
+Type=simple
+User=__XMAS_USER__
+Group=__XMAS_USER__
+EnvironmentFile=/etc/xmas-tree.env
+Environment=XMAS_HOST=127.0.0.1 XMAS_PORT=8095 XMAS_DATA_DIR=/var/www/xmas-tree/data
+ExecStart=/usr/bin/python3 /var/www/xmas-tree/server/app.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/var/www/xmas-tree/data
+
+[Install]
+WantedBy=multi-user.target

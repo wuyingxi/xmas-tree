@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Merry Christmas · 手势圣诞树</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>" />
+  <link rel="preload" href="vendor/fonts/great-vibes-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="style.css?v=10" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.js",
+        "three/addons/": "./vendor/three/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <header class="title">
+    <h1>Merry Christmas</h1>
+    <p id="subtitle">公共圣诞树 · 所有人都能看到彼此的祝福与照片</p>
+  </header>
+
+  <!-- top-right toolbar -->
+  <nav class="toolbar">
+    <button id="btn-space" title="切换公共树或创建隔离专属空间">🌍 公共树</button>
+    <button id="btn-camera" title="开启/关闭手势控制">🖐 手势控制</button>
+    <button id="btn-toggle" title="空格键">✨ 散开</button>
+    <button id="btn-photo" title="P 键">🖼 看照片</button>
+    <button id="btn-wish" title="匿名写祝福（按 B 键或比耶✌️手势直接看书签）">🔖 写祝福</button>
+    <button id="btn-manage" title="上传照片或管理内容">📷 传照片</button>
+  </nav>
+
+  <!-- gesture status -->
+  <div class="status" id="status">
+    <span id="status-gesture">🖱 拖动旋转 · 点击书签读祝福</span>
+    <span class="dot">·</span>
+    <span id="status-state">圣诞树已聚合</span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- photo caption while focused -->
+  <div class="caption" id="caption"></div>
+
+  <!-- sleek floating controls while inspecting a 3D wish bookmark -->
+  <div class="wish-focus-bar" id="wish-focus-bar" aria-hidden="true">
+    <button id="wish-prev" title="上一张祝福签 (←)">‹ 上一条</button>
+    <button class="primary" id="wish-write-from-focus">🔖 我也写一条</button>
+    <button id="wish-next" title="下一张祝福签 (→)">下一条 ›</button>
+    <button id="wish-unfocus" title="放回树上 (Esc)">放回树上</button>
+  </div>
+
+  <!-- camera preview -->
+  <div class="cam" id="cam" hidden>
+    <video id="cam-video" playsinline muted></video>
+    <canvas id="cam-canvas"></canvas>
+    <div class="cam-label" id="cam-label">加载手势模型…</div>
+  </div>
+
+  <!-- intro / help -->
+  <section class="intro" id="intro">
+    <div class="intro-card">
+      <h2>🎄 手势圣诞树</h2>
+      <ul class="gestures">
+        <li><b>✋</b><span>张开手掌</span><em>圣诞树化作星河散开</em></li>
+        <li><b>✊</b><span>握拳</span><em>星光重新聚合成树</em></li>
+        <li><b>👌</b><span>OK 手势（散开时）</span><em>取出藏在树里的照片，再比一次换下一张</em></li>
+        <li><b>✌️</b><span>比耶手势 / B 键</span><em>取出树上的祝福书签，再比一次或按 ← → 切换下一张</em></li>
+        <li><b>🔖</b><span>匿名祝福 &amp; 共享照片</span><em>所有人都能免口令写祝福、传照片，也可随时创建专属隔离圣诞树</em></li>
+      </ul>
+      <p class="intro-note" id="intro-note">没有摄像头？可用右上角按钮，或快捷键：空格散开/聚合、P 看照片、B 看书签。</p>
+      <div class="intro-actions">
+        <button class="primary" id="intro-camera">开启摄像头手势</button>
+        <button id="intro-skip">先随便看看</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- space switcher & isolated tree creator modal -->
+  <section class="modal" id="room-modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title">🌲 圣诞树空间</h3>
+        <button class="icon" id="room-modal-close" title="关闭">✕</button>
+      </div>
+      <div class="pane">
+        <div class="space-banner">
+          <div>
+            <div class="space-name" id="room-current-title">🌍 公共圣诞树</div>
+            <div class="muted" id="room-current-desc">所有人可见并共同装扮这棵树</div>
+          </div>
+          <div class="row">
+            <button id="room-copy-link">📋 复制链接</button>
+            <button id="room-go-public" hidden>回公共树</button>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" id="rtab-create">✨ 创建隔离树</button>
+          <button class="tab" id="rtab-join">🚪 进入指定空间</button>
+        </div>
+
+        <div id="rpane-create" class="stack">
+          <p class="muted">创建一棵独立的专属圣诞树，照片与祝福和公共树完全隔离，发专属链接给朋友即可共创。</p>
+          <input id="room-title-input" type="text" maxlength="24" placeholder="空间名称（选填，如：2026 宿舍圣诞树）" />
+          <input id="room-slug-input" type="text" maxlength="24" placeholder="自定义编号（选填，字母/数字/-，留空自动生成）" />
+          <input id="room-pass-input" type="password" maxlength="32" placeholder="访问密码（选填，留空则拿到链接直接进入）" autocomplete="new-password" />
+          <button class="primary" id="room-create-btn">🎄 创建并进入专属圣诞树</button>
+        </div>
+
+        <div id="rpane-join" class="stack" hidden>
+          <p class="muted">输入专属空间编号，或直接粘贴别人发你的专属链接：</p>
+          <div class="row">
+            <input id="room-join-input" type="text" placeholder="如：xmas-a7k3m 或完整链接" />
+            <button class="primary" id="room-join-btn">进入</button>
+          </div>
+          <div id="room-recent-wrap" hidden>
+            <div class="muted" style="margin-bottom:6px">最近访问过的空间</div>
+            <div class="chips" id="room-recent-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- passcode gate when visiting a locked isolated tree -->
+  <section class="modal" id="room-lock-modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title" id="lock-title">🔒 专属圣诞树</h3>
+      </div>
+      <div class="pane">
+        <p class="muted">这棵隔离圣诞树设置了访问密码，输入密码后即可查看和共同装扮它。</p>
+        <div class="row">
+          <input id="lock-pass-input" type="password" placeholder="请输入房间访问密码" autocomplete="current-password" />
+          <button class="primary" id="lock-submit-btn">解锁进入</button>
+        </div>
+        <div class="row between">
+          <span class="muted" id="lock-error"></span>
+          <button class="link" id="lock-go-public">返回公共圣诞树</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- anonymous wish write & browse modal -->
+  <section class="modal" id="wish-modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="tabs">
+          <button class="tab active" id="tab-write">✍️ 挂上祝福</button>
+          <button class="tab" id="tab-wall">📜 祝福墙 <span id="wall-count"></span></button>
+        </div>
+        <button class="icon" id="wish-modal-close" title="关闭">✕</button>
+      </div>
+
+      <div id="pane-write" class="pane">
+        <p class="muted" id="wish-space-hint">无需口令，匿名写下一句圣诞祝福，它会化作星光书签飞上这棵树。</p>
+        <div class="swatches" id="wish-swatches" role="radiogroup" aria-label="书签配色"></div>
+        <div class="field">
+          <textarea id="wish-text" rows="4" maxlength="80" placeholder="写下你的圣诞愿望或暖心祝福…"></textarea>
+          <div class="row between">
+            <span class="muted">当前空间的所有人都能看到你的祝福签</span>
+            <span class="muted" id="wish-chars">0 / 80</span>
+          </div>
+        </div>
+        <div class="row">
+          <input id="wish-author" type="text" maxlength="16" placeholder="署名（选填，留空则匿名）" />
+          <button class="primary" id="wish-submit">🔖 挂上圣诞树</button>
+        </div>
+      </div>
+
+      <div id="pane-wall" class="pane" hidden>
+        <div class="wish-wall" id="wish-wall"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- open photo upload & optional admin moderation drawer -->
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3>📷 树上的照片</h3>
+      <button class="icon" id="drawer-close" title="关闭">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div id="upload-box">
+        <label class="dropzone" id="dropzone">
+          <input id="file-input" type="file" accept="image/*" multiple hidden />
+          <span>🎁 点击或拖拽图片挂到圣诞树上</span>
+          <small>免口令开放上传 · 支持 JPG / PNG / WebP，自动压缩</small>
+        </label>
+        <div class="row between">
+          <span class="muted" id="upload-progress"></span>
+        </div>
+      </div>
+
+      <h4>当前空间的照片 <span class="muted" id="photo-count"></span></h4>
+      <div class="grid" id="photo-grid"></div>
+
+      <details class="admin-panel" id="admin-panel">
+        <summary>🔐 站长管理（删除照片 / 祝福）</summary>
+        <div id="login-box" class="stack" style="margin-top:10px">
+          <div class="row">
+            <input id="token-input" type="password" placeholder="输入站长口令解锁删除" autocomplete="current-password" />
+            <button class="primary" id="token-btn">确认</button>
+          </div>
+        </div>
+        <div id="admin-authed-bar" class="row between" hidden style="margin-top:10px">
+          <span class="muted">✅ 站长模式已开启（可删除任意内容）</span>
+          <button class="link" id="logout-btn">退出</button>
+        </div>
+        <h4>当前空间的祝福签 <span class="muted" id="admin-wish-count"></span></h4>
+        <div class="admin-wishes" id="admin-wish-list"></div>
+      </details>
+    </div>
+  </aside>
+
+  <script type="module" src="js/main.js?v=9"></script>
+</body>
+</html>
