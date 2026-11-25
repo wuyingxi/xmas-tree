@@ -6,7 +6,7 @@
   <title>Merry Christmas · 手势圣诞树</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>" />
   <link rel="preload" href="vendor/fonts/great-vibes-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="style.css?v=10" />
+  <link rel="stylesheet" href="style.css?v=11" />
   <script type="importmap">
     {
       "imports": {
@@ -19,8 +19,8 @@
 <body>
   <canvas id="scene"></canvas>
 
-  <header class="title">
-    <h1>Merry Christmas</h1>
+  <header class="title" id="site-title">
+    <h1 id="title-heading" title="清屏模式下点击文字恢复界面">Merry Christmas</h1>
     <p id="subtitle">公共圣诞树 · 所有人都能看到彼此的祝福与照片</p>
   </header>
 
@@ -32,7 +32,14 @@
     <button id="btn-photo" title="P 键">🖼 看照片</button>
     <button id="btn-wish" title="匿名写祝福（按 B 键或比耶✌️手势直接看书签）">🔖 写祝福</button>
     <button id="btn-manage" title="上传照片或管理内容">📷 传照片</button>
+    <button id="btn-clean" title="沉浸清屏模式，只留文字和圣诞树 (H 键)">🧹 清屏</button>
   </nav>
+
+  <!-- invisible top-right hover zone to restore UI in clean mode (desktop) -->
+  <div class="clean-exit-zone" id="clean-exit-zone">
+    <button id="btn-exit-clean" title="恢复界面 (H 键)">恢复界面</button>
+  </div>
+  <div class="clean-hint" id="clean-hint">已清屏 · 按 H 键或点击 Merry Christmas 恢复</div>
 
   <!-- gesture status -->
   <div class="status" id="status">
@@ -72,7 +79,7 @@
         <li><b>✌️</b><span>比耶手势 / B 键</span><em>取出树上的祝福书签，再比一次或按 ← → 切换下一张</em></li>
         <li><b>🔖</b><span>匿名祝福 &amp; 共享照片</span><em>所有人都能免口令写祝福、传照片，也可随时创建专属隔离圣诞树</em></li>
       </ul>
-      <p class="intro-note" id="intro-note">没有摄像头？可用右上角按钮，或快捷键：空格散开/聚合、P 看照片、B 看书签。</p>
+      <p class="intro-note" id="intro-note">没有摄像头？可用右上角按钮，或快捷键：空格散开/聚合、P 看照片、B 看书签、H 清屏。</p>
       <div class="intro-actions">
         <button class="primary" id="intro-camera">开启摄像头手势</button>
         <button id="intro-skip">先随便看看</button>
@@ -219,6 +226,6 @@
     </div>
   </aside>
 
-  <script type="module" src="js/main.js?v=9"></script>
+  <script type="module" src="js/main.js?v=11"></script>
 </body>
 </html>

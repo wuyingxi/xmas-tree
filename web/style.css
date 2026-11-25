@@ -42,6 +42,7 @@ button.icon { padding: 4px 10px; }
 
 .title {
   position: fixed; top: 18px; left: 24px; text-align: left; pointer-events: none; z-index: 4;
+  transition: left .48s cubic-bezier(.22, 1, .36, 1), transform .48s cubic-bezier(.22, 1, .36, 1), top .48s cubic-bezier(.22, 1, .36, 1);
 }
 .title h1 {
   margin: 0; padding: 2px 10px 4px; font-weight: 400; letter-spacing: 1px; line-height: 1.15;
@@ -50,20 +51,66 @@ button.icon { padding: 4px 10px; }
   background: linear-gradient(180deg, #fff6d8 10%, #f5c260 56%, #b97a1d 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 0 14px rgba(255, 190, 90, .44));
+  transition: font-size .4s ease;
 }
-.title p { margin: 4px 0 0 2px; color: var(--muted); letter-spacing: 4px; font-size: 12px; }
+.title p {
+  margin: 4px 0 0 2px; color: var(--muted); letter-spacing: 4px; font-size: 12px;
+  transition: opacity .35s ease;
+}
 
 .toolbar {
   position: fixed; top: 18px; right: 20px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
-  max-width: 55vw; z-index: 5;
+  max-width: 58vw; z-index: 5;
+  transition: opacity .36s cubic-bezier(.22, 1, .36, 1), transform .36s cubic-bezier(.22, 1, .36, 1);
 }
 
 .status {
   position: fixed; left: 16px; bottom: 16px; z-index: 5;
   background: var(--glass); border: 1px solid var(--line); border-radius: 999px;
   padding: 8px 16px; font-size: 14px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: opacity .36s cubic-bezier(.22, 1, .36, 1), transform .36s cubic-bezier(.22, 1, .36, 1);
 }
 .status .dot { color: var(--muted); margin: 0 6px; }
+
+/* clean screen mode: hide every button, hint, caption & preview — keep only "Merry Christmas" + tree */
+body.clean-mode .toolbar,
+body.clean-mode .status,
+body.clean-mode .toast,
+body.clean-mode .caption,
+body.clean-mode .wish-focus-bar,
+body.clean-mode .cam,
+body.clean-mode .title p {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.clean-mode .toolbar { transform: translateY(-12px); }
+body.clean-mode .status { transform: translateY(12px); }
+body.clean-mode .title {
+  left: 50%; right: auto; top: 20px; width: max-content; max-width: 96vw;
+  transform: translateX(-50%); text-align: center;
+}
+body.clean-mode .title h1 {
+  pointer-events: auto; cursor: pointer;
+  font-size: clamp(42px, 6vw, 68px);
+}
+
+.clean-exit-zone {
+  position: fixed; top: 0; right: 0; width: 140px; height: 72px; z-index: 15;
+  display: flex; align-items: flex-start; justify-content: flex-end; padding: 16px 20px;
+  pointer-events: none; opacity: 0; transition: opacity .3s ease;
+}
+body.clean-mode .clean-exit-zone { pointer-events: auto; }
+body.clean-mode .clean-exit-zone:hover { opacity: 1; }
+#btn-exit-clean { font-size: 13px; padding: 6px 14px; }
+
+.clean-hint {
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 10px); z-index: 25;
+  padding: 7px 16px; border-radius: 999px; font-size: 12px; letter-spacing: 1px;
+  color: rgba(255, 240, 210, .85); background: rgba(14, 16, 30, .65);
+  border: 1px solid rgba(255, 210, 122, .25); backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none; transition: opacity .45s ease, transform .45s ease;
+}
+.clean-hint.show { opacity: 1; transform: translate(-50%, 0); }
 
 .toast {
   position: fixed; left: 50%; bottom: 84px; transform: translate(-50%, 20px);

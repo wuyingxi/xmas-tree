@@ -69,12 +69,37 @@ addEventListener('resize', () => {
 
 // ---------------------------------------------------------------- UI helpers
 let toastTimer;
+let cleanHintTimer;
+let cleanMode = false;
+
 function toast(msg, ms = 2400) {
+  if (cleanMode) return;
   const el = $('toast');
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function setCleanMode(enabled, showHint = true) {
+  cleanMode = !!enabled;
+  document.body.classList.toggle('clean-mode', cleanMode);
+  clearTimeout(cleanHintTimer);
+  const hint = $('clean-hint');
+  if (cleanMode) {
+    manager?.close();
+    wishManager?.closeModal();
+    space?.closeModal();
+    $('toast').classList.remove('show');
+    if (showHint) {
+      hint.classList.add('show');
+      cleanHintTimer = setTimeout(() => hint.classList.remove('show'), 2200);
+    } else {
+      hint.classList.remove('show');
+    }
+  } else {
+    hint.classList.remove('show');
+  }
 }
 
 // ---------------------------------------------------------------- state
@@ -164,14 +189,22 @@ function updateButtons() {
 // ---------------------------------------------------------------- fallback & mouse controls
 $('btn-toggle').onclick = () => { unfocusWish(); setTarget(state.target === 1 ? 0 : 1); };
 $('btn-photo').onclick = () => showNextPhoto();
+$('btn-clean').onclick = () => setCleanMode(true);
+$('btn-exit-clean').onclick = () => setCleanMode(false);
+$('title-heading').onclick = () => { if (cleanMode) setCleanMode(false); };
 addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
   if (e.code === 'Space') { e.preventDefault(); unfocusWish(); setTarget(state.target === 1 ? 0 : 1); }
   if (e.code === 'KeyP') showNextPhoto();
   if (e.code === 'KeyB' || e.code === 'KeyW') showNextWish();
+  if (e.code === 'KeyH') setCleanMode(!cleanMode);
   if (e.code === 'ArrowLeft' && wishes.focused) { wishes.stepFocus(-1); updateButtons(); }
   if (e.code === 'ArrowRight' && wishes.focused) { wishes.stepFocus(1); updateButtons(); }
-  if (e.code === 'Escape') { hidePhoto(); unfocusWish(); wishManager.closeModal(); space.closeModal(); }
+  if (e.code === 'Escape') {
+    const closedSomething = gallery.focused || wishes.focused || wishManager.isModalOpen || space.isAnyModalOpen || manager.isOpen;
+    hidePhoto(); unfocusWish(); wishManager.closeModal(); space.closeModal(); manager.close();
+    if (!closedSomething && cleanMode) setCleanMode(false);
+  }
 });
 canvas.addEventListener('dblclick', () => {
   if (gallery.focused) hidePhoto();
@@ -403,6 +436,10 @@ function frame() {
 
   composer.render();
   requestAnimationFrame(frame);
+}
+if (new URLSearchParams(location.search).get('clean') === '1') {
+  closeIntro();
+  setCleanMode(true, false);
 }
 updateButtons();
 frame();
